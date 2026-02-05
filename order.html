@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Order | Ruchira Indian Cuisine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css?v=2">
+</head>
+<body>
+  <header class="top-bar">
+    <div class="logo">Ruchira <span>Indian Cuisine</span></div>
+    <nav class="nav-links">
+      <a href="/">Home</a>
+      <a href="/menu.html">Menu</a>
+    </nav>
+    <a class="pill-button nav-hidden" href="/order.html">Order Now</a>
+  </header>
+
+  <main>
+    <section class="hero" id="order-hero">
+      <div class="hero-content">
+        <p class="eyebrow">Checkout</p>
+        <h1>Place your order</h1>
+        <p class="lede">Add items, confirm details, and place via WhatsApp. We’ll call to confirm.</p>
+        <div class="hero-actions">
+          <a class="cta" href="#order">Complete order</a>
+          <a class="ghost" href="/menu.html">Browse full menu</a>
+        </div>
+        <div class="hero-tags">
+          <div>Average pickup 20 min</div>
+          <div>Delivery within 8 km</div>
+          <div>Veg & non-veg kitchens</div>
+        </div>
+      </div>
+      <div class="hero-card">
+        <p class="mini">Quick add</p>
+        <h2>Butter Chicken Bowl</h2>
+        <p>Creamy tomato gravy, charred tandoori chicken, kasuri methi.</p>
+        <div class="price-row">
+          <span class="price">$ ?</span>
+          <button class="small-button" data-add="butter-chicken">Add to cart</button>
+        </div>
+        <div class="chips">
+          <span>Low spice</span><span>Best seller</span><span>Serves 1-2</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" id="menu">
+      <div class="section-header">
+        <p class="eyebrow">Menu</p>
+        <h2>Add items to your cart</h2>
+        <p class="lede small">Tap add to include items, then finalize below.</p>
+      </div>
+      <div class="category-tabs" id="category-tabs"></div>
+      <div class="menu-grid" id="menu-grid"></div>
+    </section>
+
+    <section class="section order-section" id="order">
+      <div class="order-layout">
+        <div class="order-form">
+          <p class="eyebrow">Details</p>
+          <h2>Finish your order</h2>
+          <div class="form-grid">
+            <label>
+              Full name
+              <input type="text" id="customer-name" placeholder="Your name" autocomplete="name">
+            </label>
+            <label>
+              Phone number
+              <input type="tel" id="customer-phone" placeholder="+91 98765 43210" autocomplete="tel">
+            </label>
+            <label>
+              Order type
+              <div class="radio-row">
+                <label><input type="radio" name="orderType" value="pickup" checked> Pickup</label>
+                <label><input type="radio" name="orderType" value="delivery"> Delivery</label>
+                <label><input type="radio" name="orderType" value="dinein"> Dine-in</label>
+              </div>
+            </label>
+            <label id="address-field" class="hidden">
+              Delivery address
+              <input type="text" id="customer-address" placeholder="Flat / Street / Area">
+            </label>
+            <label>
+              Preferred time
+              <input type="text" id="customer-time" placeholder="e.g., Today 8:00 PM">
+            </label>
+            <label class="wide">
+              Notes for the kitchen / rider
+              <textarea id="customer-notes" rows="3" placeholder="Spice level, cutlery, gate code, allergies…"></textarea>
+            </label>
+          </div>
+          <div class="order-actions">
+            <button class="primary" id="place-whatsapp">Place via WhatsApp</button>
+            <button class="secondary" id="copy-order">Copy order summary</button>
+            <button class="ghost" id="clear-cart">Clear cart</button>
+          </div>
+          <p class="fineprint">No payment collected here — confirm over call/WhatsApp and pay on delivery or pickup.</p>
+        </div>
+
+        <aside class="cart">
+          <div class="cart-header">
+            <div>
+              <p class="eyebrow">Cart</p>
+              <h3>Your selections</h3>
+            </div>
+            <div class="cart-count"><span id="cart-count">0</span> items</div>
+          </div>
+          <div id="cart-items" class="cart-items"></div>
+          <div class="totals">
+            <div><span>Subtotal</span><span id="cart-subtotal">$ ?</span></div>
+            <div><span>GST (5%)</span><span id="cart-tax">$ ?</span></div>
+            <div class="grand"><span>Total</span><span id="cart-total">$ ?</span></div>
+          </div>
+          <p class="fineprint">Delivery fee (if any) is confirmed over call. Prices include service charge.</p>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer" id="contact">
+    <div>© 2026 Ruchira Indian Curry Point</div>
+    <div class="footer-links">
+      <a href="tel:+919876543210">Call us</a>
+      <a href="mailto:orders@ruchira.in">Email</a>
+      <a href="/contact.html">Contact</a>
+    </div>
+  </footer>
+
+  <div id="toast" class="toast hidden">Added to cart</div>
+  <script src="assets/js/app.js"></script>
+</body>
+</html>
