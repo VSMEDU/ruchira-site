@@ -43,11 +43,10 @@ const els = {
 };
 
 function formatMoney(value) {
-  return currency.format(value);
+  return '$???';
 }
 
 function applyCurryDistrictTheme() {
-  // Dark + warm-gold theme inspired by currydistrict.net
   const style = document.createElement('style');
   style.setAttribute('data-theme', 'curry-district');
   style.textContent = `
@@ -65,10 +64,8 @@ function applyCurryDistrictTheme() {
 
     html, body{ background:var(--cd-bg) !important; color:var(--cd-text) !important; }
 
-    /* Common containers */
     .container, .page, main{ color:var(--cd-text); }
 
-    /* Cards */
     .menu-card{
       background:var(--cd-surface) !important;
       border:1px solid var(--cd-border) !important;
@@ -77,10 +74,8 @@ function applyCurryDistrictTheme() {
     .menu-card h3{ color:var(--cd-text) !important; }
     .lede, .small, .cart-meta{ color:var(--cd-muted) !important; }
 
-    /* Price */
     .price{ color:var(--cd-gold) !important; font-weight:700; }
 
-    /* Buttons */
     button, .small-button{
       border:1px solid var(--cd-border) !important;
       background:var(--cd-surface-2) !important;
@@ -91,7 +86,6 @@ function applyCurryDistrictTheme() {
       color:var(--cd-gold) !important;
     }
 
-    /* Primary action buttons (if you have them) */
     .primary, .primary-button, #place-whatsapp{
       background:var(--cd-gold) !important;
       border-color:var(--cd-gold) !important;
@@ -103,7 +97,6 @@ function applyCurryDistrictTheme() {
       border-color:var(--cd-gold-2) !important;
     }
 
-    /* Category tabs */
     .category-button{
       background:transparent !important;
       color:var(--cd-muted) !important;
@@ -115,7 +108,6 @@ function applyCurryDistrictTheme() {
       color:var(--cd-gold) !important;
     }
 
-    /* Tags */
     .tag{
       background:rgba(214,163,50,.12) !important;
       border:1px solid rgba(214,163,50,.25) !important;
@@ -127,19 +119,16 @@ function applyCurryDistrictTheme() {
       color:#66bb6a !important;
     }
 
-    /* Cart */
     .cart-row{
       border-bottom:1px solid var(--cd-border) !important;
     }
 
-    /* Toast */
     #toast{
       background:var(--cd-surface-2) !important;
       border:1px solid var(--cd-border) !important;
       color:var(--cd-text) !important;
     }
 
-    /* Inputs */
     input, textarea, select{
       background:var(--cd-surface) !important;
       border:1px solid var(--cd-border) !important;
@@ -152,12 +141,10 @@ function applyCurryDistrictTheme() {
       box-shadow:0 0 0 3px rgba(214,163,50,.12) !important;
     }
 
-    /* Links */
     a{ color:var(--cd-gold) !important; }
     a:hover{ color:var(--cd-gold-2) !important; }
   `;
 
-  // Avoid duplicates if init runs more than once
   document.head.querySelector('style[data-theme="curry-district"]')?.remove();
   document.head.appendChild(style);
 }
