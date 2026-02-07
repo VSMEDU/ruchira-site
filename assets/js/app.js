@@ -351,6 +351,77 @@ function buildOrderSummary() {
   return lines.join('\n');
 }
 
+function buildCheckoutPayload() {
+  const name = document.getElementById('customer-name')?.value.trim() || '';
+  const phone = document.getElementById('customer-phone')?.value.trim() || '';
+  const address = document.getElementById('customer-address')?.value.trim() || '';
+  const timePref = document.getElementById('customer-time')?.value.trim() || '';
+  const notes = document.getElementById('customer-notes')?.value.trim() || '';
+  const type = document.querySelector('input[name="orderType"]:checked')?.value || 'pickup';
+
+  if (!Object.keys(cart).length) {
+    showToast('Add at least one item to cart');
+    return null;
+  }
+  if (!name || !phone) {
+    showToast('Please add your name and phone');
+    return null;
+  }
+
+  const items = Object.entries(cart).map(([id, qty]) => ({ id, qty }));
+
+  return {
+    items,
+    orderType: type,
+    customer: {
+      name,
+      phone,
+      address,
+      timePref,
+      notes
+    }
+  };
+}
+
+async function payNow() {
+  const payload = buildCheckoutPayload();
+  if (!payload) return;
+
+  const button = document.getElementById('pay-now');
+  if (button) {
+    button.disabled = true;
+    button.textContent = 'Redirecting...';
+  }
+
+  try {
+    const response = await fetch('/api/create-checkout', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const data = await response.json();
+    if (!response.ok || !data?.url) {
+      throw new Error(data?.error || 'Payment failed');
+    }
+    window.location.href = data.url;
+  } catch (error) {
+    showToast(error.message || 'Payment failed');
+    if (button) {
+      button.disabled = false;
+      button.textContent = 'Pay now';
+    }
+  }
+}
+
+function showCheckoutStatus() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.has('success')) {
+    showToast('Payment successful. We will confirm your order.');
+  } else if (params.has('canceled')) {
+    showToast('Payment canceled.');
+  }
+}
+
 function placeOrder() {
   const summary = buildOrderSummary();
   if (!summary) return;
@@ -408,6 +479,8 @@ function init() {
     renderCart();
   }
 
+  showCheckoutStatus();
+
   document.body.addEventListener('click', handleClicks);
 
   document.querySelectorAll('input[name="orderType"]').forEach((input) => {
@@ -415,6 +488,7 @@ function init() {
   });
 
   document.getElementById('place-whatsapp')?.addEventListener('click', placeOrder);
+  document.getElementById('pay-now')?.addEventListener('click', payNow);
   document.getElementById('copy-order')?.addEventListener('click', copyOrder);
   document.getElementById('clear-cart')?.addEventListener('click', clearCart);
 }
