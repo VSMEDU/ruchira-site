@@ -428,14 +428,6 @@ function showCheckoutStatus() {
   }
 }
 
-function placeOrder() {
-  const summary = buildOrderSummary();
-  if (!summary) return;
-  const encoded = encodeURIComponent(summary);
-  const url = `https://wa.me/?text=${encoded}`;
-  window.open(url, '_blank');
-}
-
 function copyOrder() {
   const summary = buildOrderSummary();
   if (!summary) return;
@@ -493,7 +485,6 @@ function init() {
     input.addEventListener('change', () => toggleAddressField(input.value));
   });
 
-  document.getElementById('place-whatsapp')?.addEventListener('click', placeOrder);
   document.getElementById('pay-now')?.addEventListener('click', payNow);
   document.getElementById('copy-order')?.addEventListener('click', copyOrder);
   document.getElementById('clear-cart')?.addEventListener('click', clearCart);

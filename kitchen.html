@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kitchen | Ruchira</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css?v=2">
+</head>
+<body class="kitchen-body">
+  <header class="top-bar">
+    <div class="logo">Ruchira <span>Kitchen</span></div>
+    <div class="kitchen-meta">Live orders</div>
+    <div></div>
+  </header>
+
+  <main class="kitchen-main">
+    <section class="kitchen-board">
+      <div class="kitchen-column" data-status="new">
+        <h2>New</h2>
+        <div class="kitchen-list" id="col-new"></div>
+      </div>
+      <div class="kitchen-column" data-status="preparing">
+        <h2>Preparing</h2>
+        <div class="kitchen-list" id="col-preparing"></div>
+      </div>
+      <div class="kitchen-column" data-status="ready">
+        <h2>Ready</h2>
+        <div class="kitchen-list" id="col-ready"></div>
+      </div>
+      <div class="kitchen-column" data-status="completed">
+        <h2>Completed</h2>
+        <div class="kitchen-list" id="col-completed"></div>
+      </div>
+      <div class="kitchen-column" data-status="refunded">
+        <h2>Refunded</h2>
+        <div class="kitchen-list" id="col-refunded"></div>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast hidden">New order received</div>
+  <script src="assets/js/kitchen.js"></script>
+</body>
+</html>

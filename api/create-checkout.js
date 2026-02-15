@@ -103,7 +103,10 @@ module.exports = async (req, res) => {
     metadata: {
       orderType: payload.orderType || '',
       name: payload.customer?.name || '',
-      phone: payload.customer?.phone || ''
+      phone: payload.customer?.phone || '',
+      address: payload.customer?.address || '',
+      timePref: payload.customer?.timePref || '',
+      notes: payload.customer?.notes || ''
     }
   });
 
