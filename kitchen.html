@@ -17,6 +17,15 @@
   </header>
 
   <main class="kitchen-main">
+    <div class="kitchen-pin hidden" id="pin-gate">
+      <div class="pin-card">
+        <h2>Kitchen access</h2>
+        <p>Enter the PIN to view orders.</p>
+        <input type="password" id="pin-input" placeholder="PIN" autocomplete="off">
+        <button class="primary" id="pin-submit">Enter</button>
+        <p class="pin-error hidden" id="pin-error">Incorrect PIN</p>
+      </div>
+    </div>
     <section class="kitchen-board">
       <div class="kitchen-column" data-status="new">
         <h2>New</h2>

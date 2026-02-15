@@ -1,6 +1,13 @@
 const { getSupabase } = require('./_supabase');
 
 module.exports = async (req, res) => {
+  const requiredPin = process.env.KITCHEN_PIN;
+  const providedPin = req.headers['x-kitchen-pin'];
+  if (requiredPin && providedPin !== requiredPin) {
+    res.status(401).json({ error: 'Unauthorized' });
+    return;
+  }
+
   const { client: supabase, error: supabaseError } = getSupabase();
   if (!supabase) {
     res.status(500).json({ error: supabaseError || 'Supabase not configured' });

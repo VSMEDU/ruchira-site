@@ -7,6 +7,13 @@ const columns = {
 };
 
 const toast = document.getElementById('toast');
+const pinGate = document.getElementById('pin-gate');
+const pinInput = document.getElementById('pin-input');
+const pinSubmit = document.getElementById('pin-submit');
+const pinError = document.getElementById('pin-error');
+const PIN_STORAGE_KEY = 'kitchen_pin';
+
+let kitchenPin = sessionStorage.getItem(PIN_STORAGE_KEY) || '';
 let knownIds = new Set();
 let initialized = false;
 
@@ -93,9 +100,16 @@ function orderCard(order) {
 }
 
 async function fetchOrders() {
-  const response = await fetch('/api/kitchen');
+  const response = await fetch('/api/kitchen', {
+    headers: kitchenPin ? { 'x-kitchen-pin': kitchenPin } : {}
+  });
   const data = await response.json();
   if (!response.ok) {
+    if (response.status === 401) {
+      if (pinGate) pinGate.classList.remove('hidden');
+      if (pinError) pinError.classList.remove('hidden');
+      return;
+    }
     showToast(data.error || 'Failed to load orders');
     return;
   }
@@ -126,7 +140,10 @@ async function fetchOrders() {
 async function updateStatus(id, status) {
   const response = await fetch('/api/kitchen', {
     method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      ...(kitchenPin ? { 'x-kitchen-pin': kitchenPin } : {})
+    },
     body: JSON.stringify({ id, status })
   });
   const data = await response.json();
@@ -146,8 +163,24 @@ function handleClick(event) {
   updateStatus(id, status);
 }
 
+function handlePinSubmit() {
+  if (!pinInput) return;
+  const value = pinInput.value.trim();
+  if (!value) return;
+  kitchenPin = value;
+  sessionStorage.setItem(PIN_STORAGE_KEY, value);
+  if (pinGate) pinGate.classList.add('hidden');
+  if (pinError) pinError.classList.add('hidden');
+  fetchOrders();
+}
+
 document.addEventListener('DOMContentLoaded', () => {
+  if (pinGate && !kitchenPin) pinGate.classList.remove('hidden');
   fetchOrders();
   setInterval(fetchOrders, 5000);
   document.body.addEventListener('click', handleClick);
+  pinSubmit?.addEventListener('click', handlePinSubmit);
+  pinInput?.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') handlePinSubmit();
+  });
 });

@@ -930,6 +930,38 @@ textarea {
   padding: 24px 4vw 40px;
 }
 
+.kitchen-pin {
+  position: fixed;
+  inset: 0;
+  background: rgba(14, 10, 8, 0.6);
+  display: grid;
+  place-items: center;
+  z-index: 20;
+}
+
+.pin-card {
+  background: #fffaf4;
+  border: 1px solid rgba(43, 26, 15, 0.12);
+  border-radius: 16px;
+  padding: 20px;
+  width: min(320px, 90vw);
+  display: grid;
+  gap: 10px;
+  text-align: center;
+}
+
+.pin-card input {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 14px;
+}
+
+.pin-error {
+  color: #b82b1d;
+  font-size: 12px;
+}
+
 .kitchen-board {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
