@@ -399,7 +399,13 @@ async function payNow() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-    const data = await response.json();
+    const text = await response.text();
+    let data = null;
+    try {
+      data = text ? JSON.parse(text) : null;
+    } catch (parseError) {
+      throw new Error(text || 'Payment failed');
+    }
     if (!response.ok || !data?.url) {
       throw new Error(data?.error || 'Payment failed');
     }
