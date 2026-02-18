@@ -4,7 +4,7 @@ export const config = {
   matcher: '/((?!api/|assets/|_next/|favicon.ico).*)'
 };
 
-export default function middleware(request) {
+export function middleware(request) {
   const pinCookie = request.cookies.get('site_pin_ok');
   const path = request.nextUrl.pathname;
 
