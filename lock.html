@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Site Locked | Ruchira</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css?v=2">
+</head>
+<body class="kitchen-body">
+  <main class="kitchen-main">
+    <div class="kitchen-pin" style="position: static; background: transparent;">
+      <div class="pin-card">
+        <h2>Site locked</h2>
+        <p>Enter the PIN to access the site.</p>
+        <input type="password" id="site-pin" placeholder="PIN" autocomplete="off">
+        <button class="primary" id="site-pin-submit">Unlock</button>
+        <p class="pin-error hidden" id="site-pin-error">Invalid PIN</p>
+      </div>
+    </div>
+  </main>
+  <script>
+    const errorEl = document.getElementById('site-pin-error');
+    const input = document.getElementById('site-pin');
+    const redirect = new URLSearchParams(window.location.search).get('redirect') || '/';
+
+    async function submitPin() {
+      const pin = input.value.trim();
+      if (!pin) return;
+      const res = await fetch('/api/unlock', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pin })
+      });
+      if (!res.ok) {
+        errorEl.classList.remove('hidden');
+        return;
+      }
+      window.location.href = redirect;
+    }
+
+    document.getElementById('site-pin-submit').addEventListener('click', submitPin);
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') submitPin();
+    });
+  </script>
+</body>
+</html>
