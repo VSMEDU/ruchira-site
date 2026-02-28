@@ -1,4 +1,4 @@
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const { WebhooksHelper } = require('square');
 const { getSupabase } = require('./_supabase');
 
 async function readRawBody(req) {
@@ -18,81 +18,89 @@ module.exports = async (req, res) => {
     return;
   }
 
-  const secret = process.env.STRIPE_WEBHOOK_SECRET;
-  if (!secret) {
-    res.status(500).send('Webhook secret not configured');
+  const signatureKey = process.env.SQUARE_WEBHOOK_SIGNATURE_KEY;
+  const notificationUrl = process.env.SQUARE_WEBHOOK_URL;
+
+  if (!signatureKey) {
+    res.status(500).send('Webhook signature key not configured');
+    return;
+  }
+  if (!notificationUrl) {
+    res.status(500).send('Webhook notification URL not configured');
     return;
   }
 
-  const sig = req.headers['stripe-signature'];
+  // Read raw body before any parsing
   const rawBody = await readRawBody(req);
+  const requestBody = rawBody.toString('utf8');
+  const signatureHeader = req.headers['x-square-hmacsha256-signature'] || '';
 
+  // Verify Square webhook signature
+  let isValid = false;
+  try {
+    isValid = await WebhooksHelper.verifySignature({
+      requestBody,
+      signatureHeader,
+      signatureKey,
+      notificationUrl
+    });
+  } catch (err) {
+    res.status(400).send(`Signature verification error: ${err.message}`);
+    return;
+  }
+
+  if (!isValid) {
+    res.status(400).send('Invalid webhook signature');
+    return;
+  }
+
+  // Parse event
   let event;
   try {
-    event = stripe.webhooks.constructEvent(rawBody, sig, secret);
-  } catch (err) {
-    res.status(400).send(`Webhook Error: ${err.message}`);
+    event = JSON.parse(requestBody);
+  } catch (_) {
+    res.status(400).send('Invalid JSON body');
     return;
   }
 
+  // Only process payment.updated events
+  if (event.type !== 'payment.updated') {
+    res.status(200).json({ received: true });
+    return;
+  }
+
+  const payment = event.data?.object?.payment;
+  if (!payment) {
+    res.status(200).json({ received: true });
+    return;
+  }
+
+  // Only act on COMPLETED payments
+  if (payment.status !== 'COMPLETED') {
+    res.status(200).json({ received: true });
+    return;
+  }
+
+  // Upsert confirmed order to Supabase
   const { client: supabase, error: supabaseError } = getSupabase();
   if (!supabase) {
     res.status(500).send(supabaseError || 'Supabase not configured');
     return;
   }
 
-  if (event.type === 'checkout.session.completed') {
-    const session = event.data.object;
-    const lineItems = await stripe.checkout.sessions.listLineItems(session.id, { limit: 100 });
+  const order = {
+    id: payment.id,
+    status: 'new',
+    source: 'square',
+    total: payment.amount_money?.amount || null,
+    currency: (payment.amount_money?.currency || 'USD').toLowerCase(),
+    payment_intent: payment.id,
+    raw: payment
+  };
 
-    const items = (lineItems.data || []).map((item) => ({
-      name: item.description,
-      quantity: item.quantity,
-      unit_amount: item.price?.unit_amount || 0,
-      amount_total: item.amount_total || 0
-    }));
-
-    const order = {
-      id: session.id,
-      status: 'new',
-      source: 'stripe',
-      customer: {
-        name: session.metadata?.name || '',
-        phone: session.metadata?.phone || '',
-        address: session.metadata?.address || '',
-        timePref: session.metadata?.timePref || '',
-        notes: session.metadata?.notes || '',
-        orderType: session.metadata?.orderType || ''
-      },
-      items,
-      subtotal: session.amount_subtotal || null,
-      tax: session.total_details?.amount_tax || null,
-      total: session.amount_total || null,
-      currency: session.currency || 'usd',
-      payment_intent: session.payment_intent || null,
-      raw: session
-    };
-
-    const { error } = await supabase.from('orders').upsert(order, { onConflict: 'id' });
-    if (error) {
-      res.status(500).send(`Supabase error: ${error.message}`);
-      return;
-    }
-
-    res.status(200).json({ received: true });
-    return;
-  }
-
-  if (event.type === 'charge.refunded') {
-    const charge = event.data.object;
-    const paymentIntent = charge.payment_intent;
-    if (paymentIntent) {
-      await supabase
-        .from('orders')
-        .update({ status: 'refunded' })
-        .eq('payment_intent', paymentIntent);
-    }
-    res.status(200).json({ received: true });
+  const { error: dbError } = await supabase.from('orders').upsert(order, { onConflict: 'id' });
+  if (dbError) {
+    res.status(500).send(`Supabase error: ${dbError.message}`);
     return;
   }
 
@@ -104,3 +112,4 @@ module.exports.config = {
     bodyParser: false
   }
 };
+

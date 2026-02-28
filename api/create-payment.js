@@ -1,4 +1,5 @@
-const stripe = require('stripe')(process.env.STRIPE_SECRET_KEY);
+const { getSquare } = require('./_square');
+const { getSupabase } = require('./_supabase');
 
 const menuItems = {
   'babycorn-manchurian': { name: "Babycorn Manchurian", price: null },
@@ -210,18 +211,10 @@ const menuItems = {
   'organic-youghart': { name: "Organic Youghart", price: 699 },
 };
 
-function getBaseUrl(req) {
-  const proto = req.headers['x-forwarded-proto'] || 'https';
-  const host = req.headers['x-forwarded-host'] || req.headers.host;
-  return `${proto}://${host}`;
-}
-
 async function readBody(req) {
   return new Promise((resolve, reject) => {
     let data = '';
-    req.on('data', (chunk) => {
-      data += chunk;
-    });
+    req.on('data', (chunk) => { data += chunk; });
     req.on('end', () => resolve(data));
     req.on('error', reject);
   });
@@ -233,21 +226,44 @@ module.exports = async (req, res) => {
     return;
   }
 
-  if (!process.env.STRIPE_SECRET_KEY) {
-    res.status(500).json({ error: 'Stripe secret key not configured' });
+  // Parse body
+  let payload = req.body;
+  if (!payload || typeof payload === 'string') {
+    const raw = (payload && typeof payload === 'string') ? payload : await readBody(req);
+    try {
+      payload = raw ? JSON.parse(raw) : {};
+    } catch (_) {
+      res.status(400).json({ error: 'Invalid JSON body' });
+      return;
+    }
+  }
+
+  // Validate required fields
+  const { nonce, idempotencyKey, items, orderType, customer } = payload;
+  if (!nonce) {
+    res.status(400).json({ error: 'Missing nonce' });
+    return;
+  }
+  if (!idempotencyKey) {
+    res.status(400).json({ error: 'Missing idempotencyKey' });
+    return;
+  }
+  if (!Array.isArray(items) || items.length === 0) {
+    res.status(400).json({ error: 'Cart is empty' });
+    return;
+  }
+  if (!orderType) {
+    res.status(400).json({ error: 'Missing orderType' });
+    return;
+  }
+  if (!customer || !customer.name || !customer.phone) {
+    res.status(400).json({ error: 'Missing customer name or phone' });
     return;
   }
 
-  let payload = req.body;
-  if (!payload || typeof payload === 'string') {
-    const raw = payload && typeof payload === 'string' ? payload : await readBody(req);
-    payload = raw ? JSON.parse(raw) : {};
-  }
-
-  const items = Array.isArray(payload.items) ? payload.items : [];
-  const lineItems = [];
+  // Resolve prices
   let subtotal = 0;
-
+  const resolvedItems = [];
   for (const item of items) {
     const menuItem = menuItems[item.id];
     const quantity = Math.max(0, Number(item.qty || 0));
@@ -257,50 +273,88 @@ module.exports = async (req, res) => {
       return;
     }
     subtotal += menuItem.price * quantity;
-    lineItems.push({
-      price_data: {
-        currency: 'usd',
-        product_data: { name: menuItem.name },
-        unit_amount: menuItem.price
-      },
-      quantity
-    });
+    resolvedItems.push({ name: menuItem.name, quantity, unit_amount: menuItem.price, amount_total: menuItem.price * quantity });
   }
 
-  if (!lineItems.length) {
-    res.status(400).json({ error: 'Cart is empty' });
+  if (resolvedItems.length === 0) {
+    res.status(400).json({ error: 'Cart is empty or no priced items' });
     return;
   }
 
   const tax = Math.round(subtotal * 0.05);
-  if (tax > 0) {
-    lineItems.push({
-      price_data: {
-        currency: 'usd',
-        product_data: { name: 'Tax (5%)' },
-        unit_amount: tax
-      },
-      quantity: 1
-    });
+  const totalCents = subtotal + tax;
+
+  // Initialize Square client
+  const { client, error: squareError } = getSquare();
+  if (!client) {
+    res.status(500).json({ error: squareError || 'Square not configured' });
+    return;
   }
 
-  const baseUrl = getBaseUrl(req);
+  const locationId = process.env.SQUARE_LOCATION_ID;
 
-  const session = await stripe.checkout.sessions.create({
-    mode: 'payment',
-    payment_method_types: ['card'],
-    line_items: lineItems,
-    success_url: `${baseUrl}/order.html?success=1`,
-    cancel_url: `${baseUrl}/order.html?canceled=1`,
-    metadata: {
-      orderType: payload.orderType || '',
-      name: payload.customer?.name || '',
-      phone: payload.customer?.phone || '',
-      address: payload.customer?.address || '',
-      timePref: payload.customer?.timePref || '',
-      notes: payload.customer?.notes || ''
-    }
-  });
+  // Create Square payment
+  let payment;
+  try {
+    const response = await client.payments.create({
+      sourceId: nonce,
+      idempotencyKey,
+      amountMoney: {
+        amount: BigInt(totalCents),
+        currency: 'USD'
+      },
+      locationId,
+      note: JSON.stringify({ orderType, ...customer }).slice(0, 500),
+      referenceId: idempotencyKey
+    });
+    payment = response.payment;
+  } catch (err) {
+    // Square payment declined or card error
+    const statusCode = err?.statusCode || err?.status || 500;
+    const message = err?.errors?.[0]?.detail || err?.message || 'Payment failed';
+    res.status(statusCode === 402 || message.toLowerCase().includes('card') ? 402 : 500).json({ error: message });
+    return;
+  }
 
-  res.status(200).json({ url: session.url });
+  if (!payment || payment.status !== 'COMPLETED') {
+    const status = payment?.status || 'UNKNOWN';
+    res.status(402).json({ error: `Payment not completed (status: ${status})` });
+    return;
+  }
+
+  // Write order to Supabase
+  const { client: supabase, error: supabaseError } = getSupabase();
+  if (!supabase) {
+    res.status(500).json({ error: supabaseError || 'Supabase not configured' });
+    return;
+  }
+
+  const order = {
+    id: payment.id,
+    status: 'new',
+    source: 'square',
+    customer: {
+      name: customer.name,
+      phone: customer.phone,
+      address: customer.address || '',
+      timePref: customer.timePref || '',
+      notes: customer.notes || '',
+      orderType
+    },
+    items: resolvedItems,
+    subtotal,
+    tax,
+    total: totalCents,
+    currency: 'usd',
+    payment_intent: payment.id,
+    raw: payment
+  };
+
+  const { error: dbError } = await supabase.from('orders').upsert(order, { onConflict: 'id' });
+  if (dbError) {
+    // Payment succeeded but DB write failed — log and still return success
+    console.error('Supabase upsert error:', dbError.message);
+  }
+
+  res.status(200).json({ orderId: payment.id, total: totalCents });
 };

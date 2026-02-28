@@ -768,6 +768,31 @@ textarea {
   margin-top: 14px;
 }
 
+.card-container {
+  width: 100%;
+  min-height: 56px;
+  background: #fffaf2;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 12px;
+  box-sizing: border-box;
+}
+
+.card-errors {
+  width: 100%;
+  color: #c0392b;
+  font-size: 14px;
+  padding: 8px 12px;
+  background: #fdf0ef;
+  border: 1px solid #e8a09a;
+  border-radius: 8px;
+}
+
+.card-errors.hidden,
+.hidden {
+  display: none;
+}
+
 .primary {
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
   color: #0f1115;
