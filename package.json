@@ -9,4 +9,5 @@
     "@supabase/supabase-js": "^2.49.1",
     "stripe": "^14.25.0"
   }
+  
 }
