@@ -2,7 +2,7 @@ create table if not exists public.orders (
   id text primary key,
   created_at timestamptz default now(),
   status text not null default 'new',
-  source text not null default 'stripe',
+  source text not null default 'square',
   customer jsonb,
   items jsonb,
   subtotal integer,

@@ -217,6 +217,7 @@ const currency = new Intl.NumberFormat('en-IN', {
 const TAX_RATE = 0.05;
 const cart = {};
 const menuMap = new Map(menuItems.map((item) => [item.id, item]));
+let squareCard = null;
 
 const els = {
   menuGrid: document.getElementById('menu-grid'),
@@ -584,34 +585,113 @@ async function payNow() {
   if (!payload) return;
 
   const button = document.getElementById('pay-now');
+  const cardErrors = document.getElementById('card-errors');
+
+  // Clear previous errors
+  if (cardErrors) {
+    cardErrors.classList.add('hidden');
+    cardErrors.textContent = '';
+  }
+
+  if (!squareCard) {
+    showCardError('Payment form not ready. Please refresh the page.');
+    return;
+  }
+
   if (button) {
     button.disabled = true;
-    button.textContent = 'Redirecting...';
+    button.textContent = 'Processing...';
   }
 
   try {
-    const response = await fetch('/api/create-checkout', {
+    // Tokenize the card via Square Web Payments SDK
+    const tokenResult = await squareCard.tokenize();
+    if (tokenResult.status !== 'OK') {
+      const msg = (tokenResult.errors || []).map((e) => e.message).join(' ');
+      showCardError(msg || 'Card details invalid. Please check and try again.');
+      if (button) {
+        button.disabled = false;
+        button.textContent = 'Pay now';
+      }
+      return;
+    }
+
+    const nonce = tokenResult.token;
+    const idempotencyKey = crypto.randomUUID();
+
+    const response = await fetch('/api/create-payment', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+      body: JSON.stringify({ nonce, idempotencyKey, ...payload })
     });
+
     const text = await response.text();
     let data = null;
     try {
       data = text ? JSON.parse(text) : null;
-    } catch (parseError) {
+    } catch (_) {
       throw new Error(text || 'Payment failed');
     }
-    if (!response.ok || !data?.url) {
+
+    if (!response.ok) {
       throw new Error(data?.error || 'Payment failed');
     }
-    window.location.href = data.url;
+
+    // Success — redirect to confirmation page
+    window.location.href = '/order.html?success=1';
   } catch (error) {
-    showToast(error.message || 'Payment failed');
+    showCardError(error.message || 'Payment failed. Please try again.');
     if (button) {
       button.disabled = false;
       button.textContent = 'Pay now';
     }
+  }
+}
+
+function showCardError(message) {
+  const cardErrors = document.getElementById('card-errors');
+  if (cardErrors) {
+    cardErrors.textContent = message;
+    cardErrors.classList.remove('hidden');
+  } else {
+    showToast(message);
+  }
+}
+
+async function initSquare() {
+  const cardContainer = document.getElementById('card-container');
+  if (!cardContainer) return;
+
+  const appId = window.SQUARE_APP_ID;
+  const locationId = window.SQUARE_LOCATION_ID;
+  const sdkUrl = window.SQUARE_SDK_URL;
+
+  if (!appId || !locationId || !sdkUrl) {
+    console.warn('Square config not loaded — check /api/square-config endpoint.');
+    return;
+  }
+
+  // Dynamically load the Square Web Payments SDK
+  await new Promise((resolve, reject) => {
+    const script = document.createElement('script');
+    script.src = sdkUrl;
+    script.onload = resolve;
+    script.onerror = () => reject(new Error('Failed to load Square SDK'));
+    document.head.appendChild(script);
+  });
+
+  if (!window.Square) {
+    console.error('Square SDK did not initialise correctly.');
+    return;
+  }
+
+  try {
+    const payments = window.Square.payments(appId, locationId);
+    const card = await payments.card();
+    await card.attach('#card-container');
+    squareCard = card;
+  } catch (err) {
+    console.error('Square card attach error:', err);
   }
 }
 
@@ -671,6 +751,7 @@ function init() {
 
   if (hasCart) {
     renderCart();
+    initSquare(); // load Square SDK and mount card form (non-blocking)
   }
 
   showCheckoutStatus();

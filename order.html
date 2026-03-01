@@ -95,6 +95,8 @@
             </label>
           </div>
           <div class="order-actions">
+            <div id="card-container" class="card-container"></div>
+            <div id="card-errors" class="card-errors hidden"></div>
             <button class="primary" id="pay-now">Pay now</button>
             <button class="secondary" id="copy-order">Copy order summary</button>
             <button class="ghost" id="clear-cart">Clear cart</button>
@@ -132,6 +134,8 @@
   </footer>
 
   <div id="toast" class="toast hidden">Added to cart</div>
+  <!-- Square public config (sets window.SQUARE_APP_ID, SQUARE_LOCATION_ID, SQUARE_SDK_URL) -->
+  <script src="/api/square-config"></script>
   <script src="assets/js/app.js"></script>
 </body>
 </html>

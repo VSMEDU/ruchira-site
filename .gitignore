@@ -2,3 +2,16 @@
 .env
 .env.*
 .env.local
+node_modules
+*.log
+npm-debug.log*
+.DS_Store
+Thumbs.db
+
+.github/
+.specify/
+specs/
+.vscode/
+.idea/
+
+
