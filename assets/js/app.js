@@ -218,6 +218,44 @@ const TAX_RATE = 0.05;
 const cart = {};
 const menuMap = new Map(menuItems.map((item) => [item.id, item]));
 
+const menuImageList = [
+  { match: ['chicken 65'], path: 'assets/images/Appetizers - Non - Veg/Chicken 65.jpg' },
+  { match: ['chicken manchurian'], path: 'assets/images/Appetizers - Non - Veg/Chicken Manchurian.jpeg' },
+  { match: ['chicken tikka kabab', 'chicken tikka kabob'], path: 'assets/images/Appetizers - Non - Veg/Chicken Tikka Kabob.jpeg' },
+  { match: ['chili chicken', 'chilli chicken'], path: 'assets/images/Appetizers - Non - Veg/Chilli Chicken.jpeg' },
+  { match: ['chili garlic chicken', 'chilli garlic chicken'], path: 'assets/images/Appetizers - Non - Veg/Chilli Garlic Chicken.jpeg' },
+  { match: ['goat chops'], path: 'assets/images/Appetizers - Non - Veg/Goat Chops.jpeg' },
+  { match: ['goat ghee roast'], path: 'assets/images/Appetizers - Non - Veg/Goat Ghee Roast.jpeg' },
+  { match: ['goat pepper fry', 'goat pepper'], path: 'assets/images/Appetizers - Non - Veg/Goat Pepper fry.jpeg' },
+  { match: ['goat sukha', 'goat sukha (4pcs) goat chops'], path: 'assets/images/Appetizers - Non - Veg/Goat Sukha.jpeg' },
+  { match: ['hariyali kabab', 'hariyali chicken'], path: 'assets/images/Appetizers - Non - Veg/Hariyali Chicken.jpeg' },
+  { match: ['jalapeno chicken', 'jalapeño chicken'], path: 'assets/images/Appetizers - Non - Veg/Jalapeño chicken.jpeg' },
+  { match: ['karampodi chicken', 'karampodi chkn'], path: 'assets/images/Appetizers - Non - Veg/Karampodi chicken.jpg' },
+  { match: ['kodi vepudu (bone in)', 'kodi vepudu'], path: 'assets/images/Appetizers - Non - Veg/Kodi Vepudu (Bone In).jpeg' },
+  { match: ['tandoori chicken'], path: 'assets/images/Appetizers - Non - Veg/Tandoori Chicken.jpeg' }
+];
+
+function normalizeName(value) {
+  return (value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim();
+}
+
+function getMenuImage(item) {
+  if (!item || item.category !== 'Appetizers' || item.veg) return '';
+  const key = normalizeName(item.name);
+  for (const entry of menuImageList) {
+    const matches = entry.match.map((m) => normalizeName(m));
+    if (matches.some((m) => key.includes(m) || m.includes(key))) {
+      return encodeURI(entry.path);
+    }
+  }
+  return '';
+}
+
 const els = {
   menuGrid: document.getElementById('menu-grid'),
   categoryTabs: document.getElementById('category-tabs'),
@@ -239,29 +277,21 @@ function applyCurryDistrictTheme() {
   style.setAttribute('data-theme', 'curry-district');
   style.textContent = `
     :root{
-      --cd-bg:#0f0f0f;
-      --cd-surface:#161616;
-      --cd-surface-2:#1f1f1f;
-      --cd-border:#2a2a2a;
-      --cd-text:#f5f1e6;
-      --cd-muted:#c9c1b3;
-      --cd-gold:#d6a332;
-      --cd-gold-2:#b8860b;
+      --cd-bg:#fffaf2;
+      --cd-surface:#ffffff;
+      --cd-surface-2:#fff3da;
+      --cd-border:#e6d8be;
+      --cd-text:#2f2516;
+      --cd-muted:#6b5a40;
+      --cd-gold:#c6922c;
+      --cd-gold-2:#b17b17;
       --cd-danger:#d24b3a;
     }
 
     html, body{ background:var(--cd-bg) !important; color:var(--cd-text) !important; }
-
     .container, .page, main{ color:var(--cd-text); }
-
-    .menu-card{
-      background:var(--cd-surface) !important;
-      border:1px solid var(--cd-border) !important;
-      box-shadow:none !important;
-    }
     .menu-card h3{ color:var(--cd-text) !important; }
     .lede, .small, .cart-meta{ color:var(--cd-muted) !important; }
-
     .price{ color:var(--cd-gold) !important; font-weight:700; }
 
     button, .small-button{
@@ -277,7 +307,7 @@ function applyCurryDistrictTheme() {
     .primary, .primary-button, #place-whatsapp{
       background:var(--cd-gold) !important;
       border-color:var(--cd-gold) !important;
-      color:#121212 !important;
+      color:#241707 !important;
       font-weight:700;
     }
     .primary:hover, .primary-button:hover, #place-whatsapp:hover{
@@ -286,8 +316,8 @@ function applyCurryDistrictTheme() {
     }
 
     .category-button{
-      background:transparent !important;
-      color:var(--cd-muted) !important;
+      background:#fffaf2 !important;
+      color:var(--cd-text) !important;
       border:1px solid var(--cd-border) !important;
     }
     .category-button.active{
@@ -297,14 +327,14 @@ function applyCurryDistrictTheme() {
     }
 
     .tag{
-      background:rgba(214,163,50,.12) !important;
-      border:1px solid rgba(214,163,50,.25) !important;
+      background:rgba(198,146,44,.12) !important;
+      border:1px solid rgba(198,146,44,.25) !important;
       color:var(--cd-gold) !important;
     }
     .tag.veg{
       background:rgba(102,187,106,.12) !important;
       border-color:rgba(102,187,106,.25) !important;
-      color:#66bb6a !important;
+      color:#4a8e52 !important;
     }
 
     .cart-row{
@@ -312,7 +342,7 @@ function applyCurryDistrictTheme() {
     }
 
     #toast{
-      background:var(--cd-surface-2) !important;
+      background:var(--cd-surface) !important;
       border:1px solid var(--cd-border) !important;
       color:var(--cd-text) !important;
     }
@@ -339,7 +369,7 @@ function applyCurryDistrictTheme() {
 
 function renderCategories() {
   if (!els.categoryTabs) return;
-  const categories = ['All', ...new Set(menuItems.map((m) => m.category))];
+  const categories = [...new Set(menuItems.map((m) => m.category))];
   els.categoryTabs.innerHTML = categories
     .map(
       (c, idx) =>
@@ -348,34 +378,165 @@ function renderCategories() {
     .join('');
 }
 
-function renderMenu(category = 'All') {
-  if (!els.menuGrid) return;
-  const filtered =
-    category === 'All' ? menuItems : menuItems.filter((item) => item.category === category);
+function describeItem(item) {
+  const name = (item.name || '').toLowerCase();
+  const tag = (item.tags || []).find((t) => t && !/order to make|comes with/i.test(t));
+  const flavor = tag ? `${tag.toLowerCase()} flavors` : 'signature spices';
+  const kind = item.veg ? 'vegetarian' : 'non-vegetarian';
+  const category = item.category ? item.category.toLowerCase() : 'specialty';
 
-  els.menuGrid.innerHTML = filtered
-    .map(
-      (item) => `
-      <article class="menu-card">
-        <div class="tag-row">
-          <span class="tag ${item.veg ? 'veg' : ''}">${item.veg ? 'Veg' : 'Non-veg'}</span>
-          <span class="tag">${item.spice} spice</span>
-          <span class="tag">${item.category}</span>
+  const rules = [
+    [/(manchurian)/, 'Indo-Chinese style, with crisp bites tossed in a savory, tangy sauce.'],
+    [/(chili|chilli)/, 'A punchy Indo-Chinese favorite with heat-forward, saucy flavors.'],
+    [/(65)\b/, 'A South Indian 65-style fry, bold, spicy, and crisp.'],
+    [/(kebab|kabab)/, 'Char‑grilled kebab style, smoky and spice-forward.'],
+    [/(tandoori)/, 'Tandoor-roasted for a smoky, lightly charred finish.'],
+    [/(biryani)/, 'Aromatic spiced rice layered with marinated ingredients, slow-cooked for depth.'],
+    [/(pulav|pulao)/, 'Fragrant rice pilaf cooked with spices and aromatics.'],
+    [/(fried rice)/, 'Wok-tossed rice with Indo‑Chinese seasonings and aromatics.'],
+    [/(noodles)/, 'Stir‑fried noodles with Indo‑Chinese seasoning and aromatics.'],
+    [/(masala dosa)/, 'Crisp dosa folded around a spiced potato filling.'],
+    [/(onion dosa)/, 'Crisp dosa topped with onion and spice.'],
+    [/(dosa)/, 'Crisp South Indian crepe made from fermented rice‑lentil batter.'],
+    [/(idli)/, 'Steamed rice‑lentil cakes, soft and light.'],
+    [/(vada)/, 'Golden, crisp fritters with a soft center.'],
+    [/(uttapam)/, 'Thick South Indian pancake with a soft, savory bite.'],
+    [/(pesarattu)/, 'Mung‑bean dosa, protein‑rich and savory.'],
+    [/(pongal)/, 'Comforting rice‑lentil porridge seasoned with spices and ghee.'],
+    [/(upma)/, 'Savory semolina porridge, gently spiced.'],
+    [/(sambar|sambhar)/, 'Lentil‑based vegetable stew with tamarind and spices.'],
+    [/(rasam)/, 'Light, peppery tamarind‑lentil broth.'],
+    [/(pappu)/, 'South Indian lentil dal, warm and comforting.'],
+    [/(pachidi|pachadi)/, 'Andhra-style chutney or yogurt relish with bright flavors.'],
+    [/(white rice)/, 'Steamed basmati rice, light and fluffy.'],
+    [/(jeera rice)/, 'Cumin‑scented basmati rice.'],
+    [/(curd rice)/, 'Cool yogurt‑rice comfort with gentle seasoning.'],
+    [/(bagara rice|bagara)/, 'Hyderabadi‑style spiced rice.'],
+    [/(chapati)/, 'Soft whole‑wheat flatbread, cooked on a hot griddle.'],
+    [/(naan)/, 'Tandoor‑baked flatbread with a soft, chewy bite.'],
+    [/(dessert)/, 'A sweet finish with classic Indian flavors.'],
+    [/(kheer)/, 'Indian rice pudding with cardamom‑like warmth.'],
+    [/(gulab jamun)/, 'Milk‑sweet dumplings soaked in fragrant syrup.'],
+    [/(rasmalai)/, 'Soft cheese patties in sweetened, flavored milk.'],
+    [/(lassi)/, 'Chilled yogurt drink, creamy and refreshing.'],
+    [/(badam milk)/, 'Warm almond‑spiced milk drink.'],
+    [/(jalebi)/, 'Crisp spiral sweet soaked in sugar syrup.'],
+    [/(laddu|ladoo)/, 'Classic Indian sweet balls with rich, nutty notes.'],
+    [/(samosa)/, 'Crisp pastry pockets with spiced filling.'],
+    [/(pakoda|pakora)/, 'Crisp fritters coated in spiced batter.'],
+    [/(mirchi bajji|bajji)/, 'Chili fritter with a crisp, spiced coating.'],
+    [/(cut mirchi)/, 'Crisp chili fritters with a spicy bite.'],
+    [/(punugulu)/, 'Crisp lentil fritters with a soft center.'],
+    [/(bonda)/, 'Fluffy fritters with a golden crust.'],
+    [/(poori)/, 'Puffed, golden wheat bread served hot.'],
+    [/(murukku|chegodilu)/, 'Crunchy, coiled rice‑flour snack.'],
+    [/(mysore pak)/, 'Ghee‑rich sweet with a soft, crumbly texture.'],
+    [/(poornalu)/, 'Stuffed sweet dumplings, tender and fragrant.'],
+    [/(bobbatlu)/, 'Stuffed sweet flatbread, soft and rich.'],
+    [/(avakaya)/, 'Andhra mango‑pickle flavors with bold tang and spice.'],
+    [/(gongura)/, 'Sorrel‑leaf tang with earthy, spicy notes.'],
+    [/(ulavacharu)/, 'Horse‑gram broth with deep, savory flavor.'],
+    [/(gutti vankaya)/, 'Stuffed eggplant cooked in a spiced gravy.'],
+    [/(perugu charu)/, 'Cool yogurt‑based soup with a gentle tang.'],
+    [/(keema)/, 'Minced‑meat style preparation, spiced and savory.'],
+    [/(ghee roast)/, 'Roasted with ghee and aromatic spices.'],
+    [/(pepper fry|pepper roast)/, 'Dry‑style fry with bold black‑pepper heat.'],
+    [/(butter chicken)/, 'Creamy tomato‑based curry with a buttery finish.'],
+    [/(palak paneer)/, 'Paneer in a spinach‑based curry.'],
+    [/(kadai paneer)/, 'Paneer in a spiced, peppery tomato gravy.'],
+    [/(paneer butter masala)/, 'Rich tomato‑butter gravy with paneer.'],
+    [/(tikka masala)/, 'Roasted pieces in a creamy, spiced tomato sauce.'],
+    [/(malai kofta)/, 'Soft koftas in a rich, creamy gravy.'],
+    [/(mandi)/, 'Slow‑cooked spiced rice with roasted meat or veg.'],
+    [/(family pack|jumbo|combo|tray)/, 'Family‑size portion designed for sharing.'],
+    [/(batter)/, 'Fresh batter prepared for classic South Indian dishes.'],
+    [/(yogurt|yoghurt)/, 'House yogurt with a clean, cultured finish.']
+  ];
+
+  for (const [pattern, desc] of rules) {
+    if (pattern.test(name)) return desc;
+  }
+
+  return `A ${kind} ${category} featuring ${flavor}.`;
+}
+
+function renderMenu(category = '') {
+  if (!els.menuGrid) return;
+  const filtered = category ? menuItems.filter((item) => item.category === category) : menuItems;
+
+  const vegItems = filtered.filter((item) => item.veg);
+  const nonVegItems = filtered.filter((item) => !item.veg);
+
+  const renderItem = (item) => {
+    const description =
+      item.description && item.description.trim() ? item.description.trim() : describeItem(item);
+    const image = getMenuImage(item);
+    const imageStyle = image
+      ? ` style="background-image: linear-gradient(rgba(255,250,242,0.55), rgba(255,250,242,0.55)), url('${image}');"`
+      : '';
+    const imageClass = image ? ' has-bg' : '';
+    return `
+      <article class="menu-card${imageClass}"${imageStyle}>
+        <div class="menu-main">
+          <div class="tag-row">
+            <span class="tag ${item.veg ? 'veg' : ''}">${item.veg ? 'Veg' : 'Non-veg'}</span>
+            <span class="tag">${item.spice} spice</span>
+            <span class="tag">${item.category}</span>
+          </div>
+          <h3>${item.name}</h3>
+          <p class="menu-desc">${description}</p>
+          <div class="tag-row">
+            ${item.tags
+              .filter((t) => !/order to make/i.test(t))
+              .map((t) => `<span class="tag">${t}</span>`)
+              .join('')}
+          </div>
         </div>
-        <h3>${item.name}</h3>
-        <p class="lede small">${item.description}</p>
-        <div class="price-row">
+        <div class="menu-cta">
           <span class="price">${formatMoney(item.price)}</span>
           <button class="small-button" data-add="${item.id}">Add</button>
         </div>
-        <div class="tag-row">
-          ${item.tags.map((t) => `<span class="tag">${t}</span>`).join('')}
-        </div>
-      </article>;
-    `
-    )
-    .join('');
+      </article>
+    `;
+  };
+
+  els.menuGrid.innerHTML = `
+    <div class="menu-section">
+      <div class="menu-section-header veg">Vegetarian</div>
+      <div class="menu-section-grid">
+        ${vegItems.map(renderItem).join('')}
+      </div>
+    </div>
+    <div class="menu-section">
+      <div class="menu-section-header nonveg">Non‑Vegetarian</div>
+      <div class="menu-section-grid">
+        ${nonVegItems.map(renderItem).join('')}
+      </div>
+    </div>
+  `;
+
+  requestAnimationFrame(() => {
+    const cards = Array.from(els.menuGrid.querySelectorAll('.menu-card'));
+    if (!cards.length) return;
+    const topMap = new Map();
+    cards.forEach((card) => {
+      const top = Math.round(card.getBoundingClientRect().top);
+      if (!topMap.has(top)) topMap.set(top, []);
+      topMap.get(top).push(card);
+    });
+    cards.forEach((card) => card.classList.remove('edge-left', 'edge-right'));
+    topMap.forEach((rowCards) => {
+      rowCards.sort((a, b) => a.getBoundingClientRect().left - b.getBoundingClientRect().left);
+      rowCards[0]?.classList.add('edge-left');
+      rowCards[rowCards.length - 1]?.classList.add('edge-right');
+    });
+  });
 }
+
+window.addEventListener('resize', () => {
+  if (!els.menuGrid) return;
+  renderMenu(document.querySelector('.category-button.active')?.dataset.category || '');
+});
 
 function addToCart(id) {
   if (!menuMap.has(id)) return;
