@@ -1,6 +1,17 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <!-- Consent Mode v2: defaults must be set before GTM loads -->
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('consent', 'default', {
+      'analytics_storage':  localStorage.getItem('cookie_consent') === 'granted' ? 'granted' : 'denied',
+      'ad_storage':         'denied',
+      'ad_user_data':       'denied',
+      'ad_personalization': 'denied'
+    });
+  </script>
   <!-- Google Tag Manager -->
   <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
   new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -23,7 +34,7 @@
   <!-- End Google Tag Manager (noscript) -->
   <header class="top-bar">
     <div class="logo"><img src="assets/logo.png" alt="Ruchira Indian Cuisine" class="logo-image"></div>
-    <nav class="nav-links">
+    <nav class="nav-links" aria-label="Main navigation">
       <a href="/">Home</a>
       <a href="/menu.html">Menu</a>
     </nav>
@@ -105,10 +116,32 @@
       <a href="tel:+919876543210">Call us</a>
       <a href="mailto:orders@ruchira.in">Email</a>
       <a href="/about.html">About</a>
+      <a href="/privacy.html">Privacy Policy</a>
     </div>
   </footer>
 
   <div id="toast" class="toast hidden">Added to cart</div>
   <script src="assets/js/app.js"></script>
+  <!-- Cookie Notice Banner -->
+  <div id="cookie-banner" style="display:none;position:fixed;bottom:0;left:0;right:0;background:#1a1a1a;color:#f5f5f5;padding:1rem 1.5rem;display:flex;align-items:center;justify-content:space-between;gap:1rem;z-index:9999;font-size:0.875rem;flex-wrap:wrap;">
+    <span>This site uses cookies for analytics to improve your experience. <a href="/privacy.html" style="color:#e8c97e;text-decoration:underline;">Learn more</a>.</span>
+    <button onclick="dismissCookieBanner()" style="background:#e8c97e;border:none;color:#1a1a1a;padding:0.4rem 1.2rem;border-radius:4px;cursor:pointer;font-weight:600;font-size:0.875rem;flex-shrink:0;">Got it</button>
+  </div>
+  <script>
+    (function() {
+      if (!localStorage.getItem('cookie_consent')) {
+        document.getElementById('cookie-banner').style.display = 'flex';
+      }
+    })();
+    function dismissCookieBanner() {
+      localStorage.setItem('cookie_consent', 'granted');
+      document.getElementById('cookie-banner').style.display = 'none';
+      if (window.gtag) {
+        gtag('consent', 'update', {'analytics_storage': 'granted'});
+      }
+    }
+  </script>
+  <!-- End Cookie Notice Banner -->
+
 </body>
 </html>
