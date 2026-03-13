@@ -97,12 +97,6 @@ All customer ordering is handled by Toast's hosted ordering page. No payment dat
 - `/order.html` auto-redirects to Toast via `window.location.replace()`
 - Order data flows back via `/api/create-order` → Supabase
 
-### Stripe — Payments
-Stripe Checkout is used for any direct payment flows.
-
-- `/api/create-checkout` creates a Stripe Checkout Session
-- `/api/webhook` verifies Stripe signature and upserts completed orders to Supabase
-
 ### Supabase — Database
 Orders are stored in a single `orders` table.
 
