@@ -1,0 +1,6 @@
+User-agent: *
+Disallow: /kitchen.html
+Disallow: /lock.html
+Disallow: /api/
+
+Sitemap: https://www.ruchiraindiancuisine.com/sitemap.xml
