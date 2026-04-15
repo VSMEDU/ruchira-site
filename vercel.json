@@ -5,7 +5,6 @@
     { "src": "*.html", "use": "@vercel/static" },
     { "src": "assets/**/*", "use": "@vercel/static" }
   ],
-  "ignoreCommand": "exit 1",
   "github": {
     "autoJobCancelation": false
   }
