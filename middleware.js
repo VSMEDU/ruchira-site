@@ -1,15 +1,12 @@
-import { NextResponse } from 'next/server';
-
 export function middleware(request) {
-  const { pathname } = request.nextUrl;
-  const hasPin = request.cookies.get('site_pin_ok')?.value === '1';
+  const { pathname } = new URL(request.url);
+  const cookies = request.headers.get('cookie') || '';
+  const hasPin = cookies.split(';').some(c => c.trim() === 'site_pin_ok=1');
 
-  if (hasPin) {
-    return NextResponse.next();
-  }
+  if (hasPin) return;
 
   if (pathname.startsWith('/api/')) {
-    return new NextResponse(JSON.stringify({ error: 'Locked' }), {
+    return new Response(JSON.stringify({ error: 'Locked' }), {
       status: 401,
       headers: { 'Content-Type': 'application/json' }
     });
@@ -17,7 +14,7 @@ export function middleware(request) {
 
   const redirectUrl = new URL('/lock.html', request.url);
   redirectUrl.searchParams.set('redirect', pathname);
-  return NextResponse.redirect(redirectUrl);
+  return Response.redirect(redirectUrl.toString());
 }
 
 export const config = {
