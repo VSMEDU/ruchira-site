@@ -1,23 +1,25 @@
 import { NextResponse } from 'next/server';
 
-export const config = {
-  matcher: '/((?!api/|assets/|_next/|favicon.ico).*)'
-};
-
 export function middleware(request) {
-  const pinCookie = request.cookies.get('site_pin_ok');
-  const path = request.nextUrl.pathname;
+  const { pathname } = request.nextUrl;
+  const hasPin = request.cookies.get('site_pin_ok')?.value === '1';
 
-  if (path === '/lock.html') {
+  if (hasPin) {
     return NextResponse.next();
   }
 
-  if (pinCookie && pinCookie.value === '1') {
-    return NextResponse.next();
+  if (pathname.startsWith('/api/')) {
+    return new NextResponse(JSON.stringify({ error: 'Locked' }), {
+      status: 401,
+      headers: { 'Content-Type': 'application/json' }
+    });
   }
 
-  const url = request.nextUrl.clone();
-  url.pathname = '/lock.html';
-  url.searchParams.set('redirect', path);
-  return NextResponse.redirect(url);
+  const redirectUrl = new URL('/lock.html', request.url);
+  redirectUrl.searchParams.set('redirect', pathname);
+  return NextResponse.redirect(redirectUrl);
 }
+
+export const config = {
+  matcher: []
+};

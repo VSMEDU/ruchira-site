@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Catering | Ruchira Indian Cuisine</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/styles.css?v=2">
+</head>
+<body>
+  <header class="top-bar">
+    <div class="logo"><img src="assets/logo.png" alt="Ruchira Indian Cuisine" class="logo-image"></div>
+    <nav class="nav-links">
+      <a href="/">Home</a>
+      <a href="/menu.html">Menu</a>
+    </nav>
+  </header>
+
+  <main>
+    <section class="section catering-section" id="top">
+      <form class="catering-form" id="catering-form">
+        <div class="form-grid">
+          <label>
+            <span>Name</span>
+            <input type="text" name="name" required>
+          </label>
+          <label>
+            <span>Email</span>
+            <input type="email" name="email" required>
+          </label>
+          <label>
+            <span>Phone</span>
+            <input type="tel" name="phone" required>
+          </label>
+          <label>
+            <span>Event date</span>
+            <input type="date" name="event_date" required>
+          </label>
+          <label>
+            <span>Event time</span>
+            <input type="time" name="event_time" required>
+          </label>
+          <label>
+            <span>Event address</span>
+            <input type="text" name="address" placeholder="Street, City, ZIP">
+          </label>
+          <label>
+            <span>Estimated guests</span>
+            <input type="number" name="guests" min="1">
+          </label>
+          <label class="full">
+            <span>Additional info</span>
+            <textarea name="notes" rows="5" placeholder="Cuisine preferences, budget, dietary notes, delivery needs..."></textarea>
+          </label>
+        </div>
+        <button class="cta" type="submit">Send catering request</button>
+        <p class="form-status" id="catering-status" role="status"></p>
+      </form>
+    </section>
+  </main>
+
+  <footer class="footer" id="contact">
+    <div class="footer-links">
+      <a href="tel:+14699564545">Call us</a>
+      <a href="mailto:ruchiralittleelm@gmail.com">Email</a>
+      <a href="/">Back to home</a>
+    </div>
+  </footer>
+
+  <script>
+    const form = document.getElementById('catering-form');
+    const statusEl = document.getElementById('catering-status');
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      statusEl.textContent = 'Sending...';
+      const data = Object.fromEntries(new FormData(form).entries());
+      try {
+        const res = await fetch('/api/catering', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data)
+        });
+        if (!res.ok) {
+          const raw = await res.text();
+          let payload = {};
+          try {
+            payload = raw ? JSON.parse(raw) : {};
+          } catch (e) {}
+          const detail =
+            payload.error ||
+            (payload.debug ? JSON.stringify(payload.debug) : '') ||
+            raw ||
+            `Request failed (${res.status})`;
+          throw new Error(detail);
+        }
+        statusEl.textContent = 'Thank you! We will get back to you shortly.';
+        form.reset();
+      } catch (err) {
+        statusEl.textContent = err?.message
+          ? `Sorry, something went wrong: ${err.message}`
+          : 'Sorry, something went wrong. Please call us instead.';
+      }
+    });
+  </script>
+</body>
+</html>

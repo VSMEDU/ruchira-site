@@ -38,6 +38,9 @@
         errorEl.classList.remove('hidden');
         return;
       }
+      try {
+        localStorage.setItem('site_pin_ok', '1');
+      } catch (e) {}
       window.location.href = redirect;
     }
 

@@ -4,11 +4,5 @@
     { "src": "api/*.js", "use": "@vercel/node" },
     { "src": "*.html", "use": "@vercel/static" },
     { "src": "assets/**/*", "use": "@vercel/static" }
-  ],
-  "routes": [
-    { "src": "/api/(.*)", "dest": "/api/$1.js" },
-    { "src": "/lock.html", "dest": "/lock.html" },
-    { "src": "/(.*)", "has": [{ "type": "cookie", "key": "site_pin_ok", "value": "1" }], "dest": "/$1" },
-    { "src": "/(.*)", "dest": "/lock.html" }
   ]
 }
