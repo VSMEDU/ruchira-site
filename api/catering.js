@@ -1,12 +1,9 @@
-import Mailgun from 'mailgun.js';
-import formData from 'form-data';
+import nodemailer from 'nodemailer';
 
 const {
-  MAILGUN_API_KEY,
-  MAILGUN_DOMAIN,
-  MAILGUN_FROM_EMAIL,
-  CATERING_TO_EMAIL,
-  MAILGUN_API_BASE
+  MAILGUN_SMTP_USER,
+  MAILGUN_SMTP_PASSWORD,
+  CATERING_TO_EMAIL
 } = process.env;
 
 function validateBody(body) {
@@ -25,18 +22,17 @@ export default async function handler(req, res) {
   }
 
   const body = req.body || {};
-  const error = validateBody(body);
-  if (error) {
-    return res.status(400).json({ error });
+  const validationError = validateBody(body);
+  if (validationError) {
+    return res.status(400).json({ error: validationError });
   }
 
-  const emailConfigured = MAILGUN_API_KEY && MAILGUN_DOMAIN && MAILGUN_FROM_EMAIL && CATERING_TO_EMAIL;
-
-  if (!emailConfigured) {
+  if (!MAILGUN_SMTP_USER || !MAILGUN_SMTP_PASSWORD || !CATERING_TO_EMAIL) {
+    console.error('Missing env vars:', { MAILGUN_SMTP_USER: !!MAILGUN_SMTP_USER, MAILGUN_SMTP_PASSWORD: !!MAILGUN_SMTP_PASSWORD, CATERING_TO_EMAIL: !!CATERING_TO_EMAIL });
     return res.status(500).json({ error: 'Email service not configured' });
   }
 
-  const lines = [
+  const text = [
     `Name: ${body.name}`,
     `Email: ${body.email}`,
     `Phone: ${body.phone}`,
@@ -45,64 +41,34 @@ export default async function handler(req, res) {
     `Event time: ${body.event_time}`,
     `Guests: ${body.guests || 'N/A'}`,
     `Additional info: ${body.notes || 'N/A'}`
-  ];
+  ].join('\n');
 
-  const mailgun = new Mailgun(formData);
-  const primaryBase = MAILGUN_API_BASE || 'https://api.mailgun.net';
-  const fallbackBase = primaryBase === 'https://api.mailgun.net'
-    ? 'https://api.eu.mailgun.net'
-    : 'https://api.mailgun.net';
-
-  const makeClient = (base) =>
-    mailgun.client({
-      username: 'api',
-      key: MAILGUN_API_KEY,
-      url: base
-    });
+  const transporter = nodemailer.createTransport({
+    host: 'smtp.mailgun.org',
+    port: 587,
+    secure: false,
+    auth: {
+      user: MAILGUN_SMTP_USER,
+      pass: MAILGUN_SMTP_PASSWORD
+    }
+  });
 
   try {
-    try {
-      const mg = makeClient(primaryBase);
-      await mg.messages.create(MAILGUN_DOMAIN, {
-        to: CATERING_TO_EMAIL,
-        from: MAILGUN_FROM_EMAIL,
-        subject: `New Catering Request — ${body.name}`,
-        text: lines.join('\n'),
-        'h:Reply-To': body.email
-      });
-    } catch (err) {
-      const status = err?.response?.status;
-      const message = err?.response?.body?.message || err?.message || '';
-      const isNotFound = status === 404 || /not found/i.test(message);
-      if (!isNotFound) {
-        throw err;
-      }
-      const mgFallback = makeClient(fallbackBase);
-      await mgFallback.messages.create(MAILGUN_DOMAIN, {
-        to: CATERING_TO_EMAIL,
-        from: MAILGUN_FROM_EMAIL,
-        subject: `New Catering Request — ${body.name}`,
-        text: lines.join('\n'),
-        'h:Reply-To': body.email
-      });
-    }
+    await transporter.sendMail({
+      from: MAILGUN_SMTP_USER,
+      to: CATERING_TO_EMAIL,
+      subject: `New Catering Request — ${body.name}`,
+      text,
+      replyTo: body.email
+    });
+
+    console.log('Catering email sent successfully to', CATERING_TO_EMAIL);
     return res.status(200).json({ ok: true });
   } catch (err) {
-    console.error('Catering request failed:', err);
-    const body = err?.response?.body;
-    const detailed =
-      body?.message ||
-      body?.details ||
-      body?.error ||
-      err?.message ||
-      (body ? JSON.stringify(body) : null);
+    console.error('Catering SMTP error:', err.message, err.code);
     return res.status(500).json({
-      error: detailed || 'Failed to send request',
-      debug: {
-        primaryBase,
-        fallbackBase,
-        status: err?.response?.status || null
-      }
+      error: err.message || 'Failed to send email',
+      debug: { code: err.code || null }
     });
   }
 }
