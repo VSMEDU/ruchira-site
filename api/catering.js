@@ -57,7 +57,7 @@ export default async function handler(req, res) {
     await transporter.sendMail({
       from: MAILGUN_SMTP_USER,
       to: CATERING_TO_EMAIL,
-      subject: `New Catering Request — ${body.name}`,
+      subject: `New Catering Request — ${body.name} | ${body.event_date}`,
       text,
       replyTo: body.email
     });
