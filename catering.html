@@ -105,5 +105,19 @@
       }
     });
   </script>
+
+  <script>
+    document.querySelectorAll('a[href]').forEach(function(link) {
+      var href = link.getAttribute('href');
+      if (href && !href.startsWith('http') && !href.startsWith('#') && !href.startsWith('mailto') && !href.startsWith('tel')) {
+        link.addEventListener('click', function(e) {
+          e.preventDefault();
+          document.body.classList.add('fade-out');
+          setTimeout(function() { window.location.href = href; }, 300);
+        });
+      }
+    });
+  </script>
+
 </body>
 </html>
