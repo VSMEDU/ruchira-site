@@ -489,9 +489,12 @@ img {
   justify-content: center;
 }
 
-.ig-reel-item .instagram-media {
-  border-radius: 12px !important;
+.ig-iframe {
+  width: 100%;
+  height: 560px;
+  border-radius: 12px;
   overflow: hidden;
+  display: block;
 }
 
 @media (max-width: 900px) {
